@@ -206,7 +206,7 @@
 
       showSpinner();
       signInWithEmailAndPassword(auth, email, password)
-        .then(() => window.location.href = "https://rave-master.github.io/penro-ddn-portal/home.html")
+        .then(() => window.location.href = "http://portal.ravemaster.store/home")
         .catch(error => showModal("Login failed: " + error.message))
         .finally(() => hideSpinner());
     };
@@ -215,7 +215,7 @@
       const provider = new GoogleAuthProvider();
       showSpinner();
       signInWithPopup(auth, provider)
-        .then(() => window.location.href = "https://rave-master.github.io/penro-ddn-portal/home.html")
+        .then(() => window.location.href = "http://portal.ravemaster.store/home")
         .catch(error => showModal("Google login failed: " + error.message))
         .finally(() => hideSpinner());
     };
