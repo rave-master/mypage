@@ -63,6 +63,11 @@
       color: #444;
     }
 
+    .facebook-btn {
+      background-color: #3b5998;
+      color: white;
+    }
+
     .login-box input:focus {
       outline: none;
       box-shadow: 0 0 5px #00d1ff;
@@ -78,7 +83,6 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Modal */
     #modal {
       display: none;
       position: fixed;
@@ -102,7 +106,6 @@
       text-align: center;
     }
 
-    /* Spinner Overlay */
     #spinner-overlay {
       display: none;
       position: fixed;
@@ -139,6 +142,9 @@
     <button class="google-btn" onclick="loginWithGoogle()">
       <img src="https://img.icons8.com/color/16/000000/google-logo.png"/> Login with Google
     </button>
+    <button class="facebook-btn" onclick="loginWithFacebook()">
+      <img src="https://img.icons8.com/color/16/000000/facebook-new.png"/> Login with Facebook
+    </button>
     <button onclick="register()">Register</button>
     <button onclick="forgotPassword()">Forgot Password?</button>
   </div>
@@ -161,6 +167,7 @@
       createUserWithEmailAndPassword,
       signInWithPopup,
       GoogleAuthProvider,
+      FacebookAuthProvider,
       sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
@@ -218,6 +225,15 @@
       signInWithPopup(auth, provider)
         .then(() => window.location.href = "http://portal.ravemaster.store/home")
         .catch(error => showModal("Google login failed: " + error.message))
+        .finally(() => hideSpinner());
+    };
+
+    window.loginWithFacebook = function () {
+      const provider = new FacebookAuthProvider();
+      showSpinner();
+      signInWithPopup(auth, provider)
+        .then(() => window.location.href = "http://portal.ravemaster.store/home")
+        .catch(error => showModal("Facebook login failed: " + error.message))
         .finally(() => hideSpinner());
     };
 
