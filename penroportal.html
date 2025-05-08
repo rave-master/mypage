@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>DENR PENRO DDN Portal</title>
-  <link rel="icon" href="https://i.imgur.com/ZRlEx8f.png" type="image/png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="https://i.imgur.com/ZRlEx8f.png" type="image/png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       background: url('https://i.imgur.com/r60H0tj.gif') no-repeat center center fixed;
@@ -130,35 +130,77 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    .radio-group {
+      display: flex;
+      justify-content: space-around;
+      margin: 10px 0;
+    }
+
+    .radio-group label {
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .small-text {
+      font-size: 12px;
+      margin: 10px 0;
+    }
   </style>
 </head>
 <body>
 
-  <div class="login-box">
+  <!-- Login Box -->
+  <div class="login-box" id="login-box">
     <h2>DENR PENRO DDN PORTAL</h2>
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
     <button onclick="loginWithEmail()">Login</button>
     <button class="google-btn" onclick="loginWithGoogle()">
-      <img src="https://img.icons8.com/color/16/000000/google-logo.png"/> Login with Google
+      <img src="https://img.icons8.com/color/16/000000/google-logo.png" /> Login with Google
     </button>
     <button class="facebook-btn" onclick="loginWithFacebook()">
-      <img src="https://img.icons8.com/color/16/000000/facebook-new.png"/> Login with Facebook
+      <img src="https://img.icons8.com/color/16/000000/facebook-new.png" /> Login with Facebook
     </button>
     <button onclick="register()">Register</button>
     <button onclick="forgotPassword()">Forgot Password?</button>
   </div>
 
+  <!-- Registration Box -->
+  <div class="login-box" id="register-box" style="display:none;">
+    <h2>Registration</h2>
+
+    <div class="radio-group">
+      <label><input type="radio" name="accountType" value="Personal" checked /> Personal</label>
+      <label><input type="radio" name="accountType" value="Company" /> Company</label>
+    </div>
+
+    <input type="email" id="reg-email" placeholder="Email" />
+    <input type="text" id="reg-name" placeholder="FullName" />
+    <input type="password" id="reg-password" placeholder="Password" />
+
+    <div class="radio-group">
+      <label><input type="radio" name="gender" value="Male" checked /> Male</label>
+      <label><input type="radio" name="gender" value="Female" /> Female</label>
+    </div>
+
+    <p class="small-text">
+      By clicking Register, you agree on our <a href="#">Privacy Policy</a>.
+    </p>
+
+    <button onclick="submitRegistration()">Submit</button>
+    <button onclick="goBackToLogin()">Back to Login</button>
+  </div>
+
   <!-- Modal -->
-  <div id="modal">
-    <div id="modal-content"></div>
-  </div>
+  <div id="modal"><div id="modal-content"></div></div>
 
-  <!-- Spinner Overlay -->
-  <div id="spinner-overlay">
-    <div class="spinner"></div>
-  </div>
+  <!-- Spinner -->
+  <div id="spinner-overlay"><div class="spinner"></div></div>
 
+  <!-- Firebase Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import {
@@ -170,6 +212,11 @@
       FacebookAuthProvider,
       sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD2xLVGe79OxzEHC2uXNMcbCtWugGn2M_k",
@@ -182,17 +229,12 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-
-    function isValidEmail(email) {
-      return /\S+@\S+\.\S+/.test(email);
-    }
+    const db = getFirestore(app);
 
     function showModal(message) {
       document.getElementById("modal-content").innerText = message;
       document.getElementById("modal").style.display = "flex";
-      setTimeout(() => {
-        document.getElementById("modal").style.display = "none";
-      }, 3000);
+      setTimeout(() => document.getElementById("modal").style.display = "none", 3000);
     }
 
     function showSpinner() {
@@ -203,14 +245,15 @@
       document.getElementById("spinner-overlay").style.display = "none";
     }
 
+    function isValidEmail(email) {
+      return /\S+@\S+\.\S+/.test(email);
+    }
+
     window.loginWithEmail = function () {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
-      if (!isValidEmail(email)) {
-        showModal("Please enter a valid email address.");
-        return;
-      }
+      if (!isValidEmail(email)) return showModal("Please enter a valid email.");
 
       showSpinner();
       signInWithEmailAndPassword(auth, email, password)
@@ -238,32 +281,52 @@
     };
 
     window.register = function () {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      document.getElementById("login-box").style.display = "none";
+      document.getElementById("register-box").style.display = "block";
+    };
 
-      if (!isValidEmail(email) || password.length < 6) {
-        showModal("Enter a valid email and password (min 6 characters).");
-        return;
+    window.goBackToLogin = function () {
+      document.getElementById("register-box").style.display = "none";
+      document.getElementById("login-box").style.display = "block";
+    };
+
+    window.submitRegistration = async function () {
+      const email = document.getElementById("reg-email").value;
+      const password = document.getElementById("reg-password").value;
+      const name = document.getElementById("reg-name").value;
+      const gender = document.querySelector('input[name="gender"]:checked').value;
+      const accountType = document.querySelector('input[name="accountType"]:checked').value;
+
+      if (!isValidEmail(email) || password.length < 6 || !name.trim()) {
+        return showModal("Please fill all fields correctly.");
       }
 
       showSpinner();
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => showModal("Registration successful! You can now log in."))
-        .catch(error => showModal("Registration failed: " + error.message))
-        .finally(() => hideSpinner());
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          email,
+          name,
+          gender,
+          accountType,
+          createdAt: new Date().toISOString()
+        });
+        showModal("Registration successful!");
+        setTimeout(() => window.location.href = "http://portal.ravemaster.store/home", 2000);
+      } catch (error) {
+        showModal("Registration failed: " + error.message);
+      } finally {
+        hideSpinner();
+      }
     };
 
     window.forgotPassword = function () {
       const email = document.getElementById("email").value;
-
-      if (!isValidEmail(email)) {
-        showModal("Enter a valid email to reset password.");
-        return;
-      }
+      if (!isValidEmail(email)) return showModal("Enter a valid email to reset password.");
 
       showSpinner();
       sendPasswordResetEmail(auth, email)
-        .then(() => showModal("Password reset email sent. Check your inbox."))
+        .then(() => showModal("Reset email sent. Check your inbox."))
         .catch(error => showModal("Error: " + error.message))
         .finally(() => hideSpinner());
     };
